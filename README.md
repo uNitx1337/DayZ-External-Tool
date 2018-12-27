@@ -6,10 +6,6 @@ Example (very easy to use!)
 
 u need bypass for cheating in the game
 
-int main()
-{
-	EnfusionProcess::AutoGameSelection(Analysis::Deep); 
-
 	while (true) 
 	{
 		printf("Server: %s \n", EnfusionEngine::GetNetworkClientServerName().c_str());
@@ -71,5 +67,4 @@ int main()
 		}
 	}
 
-	return 0;
-}
+
