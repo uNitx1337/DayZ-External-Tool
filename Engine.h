@@ -47,6 +47,9 @@
 
 using namespace std;
 
+
+// it 0.63 offsets u need just update this
+
 #define off_world 0xe0fd48
 #define off_networkmanager 0xdbc170
 
