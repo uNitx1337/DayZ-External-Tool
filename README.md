@@ -4,6 +4,7 @@ Tool for creating external hacks for dayz sa 0.63 / 1.0
 
 Example (very easy to use!)
 
+u need bypass for cheating in the game
 
 int main()
 {
