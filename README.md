@@ -1,10 +1,8 @@
 # DayZ-External-Tool
-Tool for creating external hacks for dayz sa 0.63 / 1.0
-
+Tool for create external hacks for dayz sa 0.63 / 1.0
+u need to make or buy bypass for cheating in the game!!!!
 
 Example (very easy to use!)
-
-u need bypass for cheating in the game
 
 	while (true) 
 	{
