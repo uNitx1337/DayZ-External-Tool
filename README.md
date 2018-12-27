@@ -2,9 +2,19 @@
 Tool for creating external hacks for dayz sa 0.63 / 1.0
 
 
-Example (easy to use)
+Example (very easy to use!)
 
-for (uint64_t Entity : EnfusionEngine::GetAllEntityes())
+int main()
+{
+	EnfusionProcess::AutoGameSelection(Analysis::Deep); 
+
+	while (true) 
+	{
+		printf("Server: %s \n", EnfusionEngine::GetNetworkClientServerName().c_str());
+		printf("Players Online: %d \n", EnfusionEngine::GetCountOfPlayers());
+
+		
+		for (uint64_t Entity : EnfusionEngine::GetAllEntityes())
 		{
 			Vector3 worldPosition = EnfusionEngine::GetCoordinate(Entity);
 			Vector3 screenPosition = EnfusionEngine::WorldToScreen(worldPosition);
@@ -58,3 +68,6 @@ for (uint64_t Entity : EnfusionEngine::GetAllEntityes())
 			EnfusionEngine::MovCameraDown();
 		}
 	}
+
+	return 0;
+}
