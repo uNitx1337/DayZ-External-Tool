@@ -2,8 +2,8 @@
 	by unitx 12.22.2018
 */
 
-#include "Engine/Headers/Engine.h"
-#include "Engine/Headers/EnfusionEngine.h"
+#include "Engine.h"
+#include "EnfusionEngine.h"
 
 int main()
 {
