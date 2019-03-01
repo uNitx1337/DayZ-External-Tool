@@ -1,5 +1,5 @@
-﻿/*
-	by unitx 12.22.2018
+/*
+	by unitx 12.22.2018 (3.1.2019 - lastUpdate)
 */
 
 #include "Engine.h"
@@ -41,16 +41,19 @@ public:
 	static Vector3 GetCoordinate(uint64_t Entity);
 	static float GetDistanceToMe(Vector3 Entity);
 	static float GetDistanceFromTo(Vector3 From, Vector3 To);
-	static uint64_t GetItemTable(uint64_t index);
-	static uint64_t GetItemTableSize(uint64_t index);
+	static uint64_t GetItemTable();
+	static uint64_t GetItemTableSize();
 	static uint64_t NearEntityTable();
 	static uint64_t NearEntityTableSize();
 	static uint64_t FarEntityTable();
 	static uint64_t FarEntityTableSize();
+	static uint64_t BulletTable();
+	static uint64_t BulletTableSize();
 	static vector<uint64_t> GetAllItems();
 	static vector<uint64_t> GetNearEntityes();
 	static vector<uint64_t> GetFarEntityes();
 	static vector<uint64_t> GetAllEntityes();
+	static vector<uint64_t> GetAllBullets();
 	static Vector3 WorldToScreen(Vector3 Position);
 	static void MovCameraUp();
 	static void MovCameraDown();
@@ -59,6 +62,8 @@ public:
 	static void MovCameraForward();
 	static void MovCameraBackward();
 	static float CameraSpeed;
+	static bool SetPosition(uint64_t Entity, Vector3 to);
+	static bool KillBySilentAim(uint64_t Entity);
 	static bool SetCameraMovSpeed(float Speed);
 	static Vector3 GetInvertedViewRight();
 	static Vector3 GetInvertedViewUp();
@@ -67,6 +72,8 @@ public:
 	static Vector3 GetInvertedViewTranslation();
 	static Vector3 GetProjectionD1();
 	static Vector3 GetProjectionD2();
+	static string GetDirection();
+	static float RadiansToDegrees(float value);
 private:
 	static string ReadArmaString(uint64_t address);
 };
@@ -219,7 +226,7 @@ uint64_t EnfusionEngine::GetLocalPlayerVisualState() {
 }
 
 uint64_t EnfusionEngine::GetEntity(uint64_t PlayerList, uint64_t SelectedPlayer) {
-	return EnfusionProcess::ReadData<uint64_t>(PlayerList + SelectedPlayer * off_world_bullettable);
+	return EnfusionProcess::ReadData<uint64_t>(PlayerList + SelectedPlayer * off_sortedobject_entity);
 }
 
 uint64_t EnfusionEngine::GetNetworkId(uint64_t Entity) {
@@ -239,14 +246,17 @@ string EnfusionEngine::GetItemInHands(uint64_t Entity) {
 
 string EnfusionEngine::GetEntityTypeName(uint64_t Entity) {
 	return EnfusionEngine::ReadArmaString(EnfusionProcess::ReadData<uint64_t>(
-		EnfusionProcess::ReadData<uint64_t>(Entity + off_entity_rendererentitytype) + off_entitytype_configname)).c_str();
+		EnfusionProcess::ReadData<uint64_t>(
+			Entity + off_entity_rendererentitytype)
+		+ off_entitytype_configname)).c_str();
 }
 
 uint64_t EnfusionEngine::GetType(uint64_t Entity) {
 	return EnfusionProcess::ReadData<uint64_t>(
 		EnfusionProcess::ReadData<uint64_t>(
 			EnfusionProcess::ReadData<uint64_t>(
-				Entity + off_entity_rendererentitytype) + off_entitytype_configname) + 0x18);
+				Entity + off_entity_rendererentitytype)
+			+ off_entitytype_configname) + 0x18);
 }
 
 Vector3 EnfusionEngine::GetInvertedViewRight() {
@@ -286,6 +296,8 @@ Vector3 EnfusionEngine::GetProjectionD2() {
 
 Vector3 EnfusionEngine::WorldToScreen(Vector3 Position)
 {
+	//convert world cords to screen cords :)
+	
 	if (!EnfusionEngine::GetCamera())
 	return Vector3();
 
@@ -301,17 +313,47 @@ Vector3 EnfusionEngine::WorldToScreen(Vector3 Position)
 		z);
 }
 
+float EnfusionEngine::RadiansToDegrees(float radians) {
+	float degrees;
+	degrees = ((radians * 180) / M_PI);
+	return degrees;
+}
+
+string EnfusionEngine::GetDirection()
+{
+	//get ur direction view
+	
+	Vector3 viewAnglesRadians, viewAngle;
+	viewAnglesRadians.x = atan2(
+		EnfusionEngine::GetInvertedViewRight().z, EnfusionEngine::GetInvertedViewRight().x);
+	viewAngle.x = EnfusionEngine::RadiansToDegrees(viewAnglesRadians.x);
+	viewAnglesRadians.y = atan2(
+		EnfusionEngine::GetInvertedViewForward().y,EnfusionEngine::GetInvertedViewUp().y);
+	viewAngle.y = EnfusionEngine::RadiansToDegrees(viewAnglesRadians.y);
+
+	if (viewAngle.x >= 0 && viewAngle.x <= 90) {
+		return "NW";
+	}
+	else if (viewAngle.x <= 0 && viewAngle.x >= -90) {
+		return "NE";
+	}
+	else if (viewAngle.x >= 90 && viewAngle.x <= 180) {
+		return "SW";
+	}
+	else if (viewAngle.x <= -90 && viewAngle.x >= -180) {
+		return "SE";
+	}
+}
+
 Vector3 EnfusionEngine::GetCoordinate(uint64_t Entity)
 {
-	if (Entity == EnfusionEngine::GetLocalPlayer())
-	{
+	if (Entity == EnfusionEngine::GetLocalPlayer()) {
 		return Vector3(EnfusionProcess::ReadData<Vector3>(
-			EnfusionEngine::GetLocalPlayerVisualState() + off_visualstate_headposition));
-	}
-	else {
+			EnfusionEngine::GetLocalPlayerVisualState() + off_visualstate_position));
+	} else {
 		return  Vector3(EnfusionProcess::ReadData<Vector3>(
 			EnfusionProcess::ReadData<uint64_t>(
-				Entity + off_entity_renderervisualstate) + off_visualstate_headposition));
+				Entity + off_entity_renderervisualstate) + off_visualstate_position));
 	}
 }
 
@@ -338,14 +380,23 @@ string EnfusionEngine::GetModelName(uint64_t Entity) {
 		EnfusionProcess::ReadData<uint64_t>(Entity + off_entity_rendererentitytype) + off_entitytype_modelname)).c_str();
 }
 
-uint64_t EnfusionEngine::GetItemTable(uint64_t index)
-{
+uint64_t EnfusionEngine::BulletTable() {
 	return EnfusionProcess::ReadData<uint64_t>(
-		EnfusionEngine::GetWorld() + off_world_itemtable + (index * 0x20));
+		EnfusionEngine::GetWorld() + off_world_bullettable);
 }
 
-uint64_t EnfusionEngine::GetItemTableSize(uint64_t index) {
-	return sizeof(EnfusionEngine::GetItemTable(index)) * 3;
+uint64_t EnfusionEngine::BulletTableSize() {
+	return sizeof(EnfusionEngine::BulletTable());
+}
+
+uint64_t EnfusionEngine::GetItemTable()
+{
+	return EnfusionProcess::ReadData<uint64_t>(
+		EnfusionEngine::GetWorld() + off_world_itemtable);
+}
+
+uint64_t EnfusionEngine::GetItemTableSize() {
+	return sizeof(EnfusionEngine::GetItemTable()) * 3;
 }
 
 
@@ -371,18 +422,14 @@ vector<uint64_t> EnfusionEngine::GetAllItems()
 {
 	vector<uint64_t> arrayList;
 
-	for (uint64_t itable = 0; itable < 12; itable++)
-	{		
-		//for (uint64_t pItems = NULL; pItems < GetItemTableSize(itable); ++pItems)
-		//{
-			//i don't now how it working... :3
-		    // me need help!
-		//}
+	for (uint64_t ItemId = NULL; ItemId < EnfusionEngine::GetItemTableSize(); ++ItemId) {
+		arrayList.push_back(EnfusionEngine::GetEntity(EnfusionEngine::GetItemTable(), ItemId));
 	}
+	
 	return arrayList;
 }
 
-vector<uint64_t> EnfusionEngine::GetNearEntityes()
+vector<uint64_t> EnfusionEngine::GetNearEntityes() // get entityes from 0 - 100m
 {
 	vector<uint64_t> arrayList;
 
@@ -392,7 +439,7 @@ vector<uint64_t> EnfusionEngine::GetNearEntityes()
 	return arrayList;
 }
 
-vector<uint64_t> EnfusionEngine::GetFarEntityes()
+vector<uint64_t> EnfusionEngine::GetFarEntityes() // get entityes from 100 - 1000 & 1635m
 {
 	vector<uint64_t> arrayList;
 
@@ -402,18 +449,62 @@ vector<uint64_t> EnfusionEngine::GetFarEntityes()
 	return arrayList;
 }
 
+bool EnfusionEngine::SetPosition(uint64_t Entity, Vector3 TargetPosition)
+{
+	if (Entity == EnfusionEngine::GetLocalPlayer()) {
+		EnfusionProcess::WriteData<Vector3>(
+			EnfusionProcess::ReadData<uint64_t>(
+				Entity + off_entity_futurevisualstate) + off_visualstate_position, TargetPosition);
+	} else {
+		EnfusionProcess::WriteData<Vector3>(
+			EnfusionProcess::ReadData<uint64_t>(
+				Entity + off_entity_renderervisualstate) + off_visualstate_position, TargetPosition);
+	}
+	return true;
+}
+
+bool EnfusionEngine::KillBySilentAim(uint64_t Entity)
+{
+	for (uint64_t playerId = NULL; playerId < EnfusionEngine::BulletTableSize(); ++playerId) {
+		Vector3 WorldPosition = EnfusionEngine::GetCoordinate(Entity);
+		EnfusionEngine::SetPosition(EnfusionEngine::GetEntity(EnfusionEngine::BulletTable(), playerId), // tp ur bullet to entity head
+					    Vector3(WorldPosition.x, WorldPosition.y + 1.0f, WorldPosition.z)); // body pos [+/-] :)
+	}
+	return true;
+}
+
+vector<uint64_t> EnfusionEngine::GetAllBullets()
+{
+	vector<uint64_t> arrayList;
+
+	for (uint64_t playerId = NULL; playerId < EnfusionEngine::BulletTableSize(); ++playerId) {
+		arrayList.push_back(EnfusionEngine::GetEntity(EnfusionEngine::BulletTable(), playerId));
+	}
+
+	return arrayList;
+}
+
 vector<uint64_t> EnfusionEngine::GetAllEntityes()
 {
 	vector<uint64_t> arrayList;
 
-	for (uint64_t playerId = NULL; playerId < EnfusionEngine::NearEntityTableSize(); ++playerId) {
-		arrayList.push_back(EnfusionEngine::GetEntity(EnfusionEngine::NearEntityTable(), playerId));
-
-		for (uint64_t playerId = NULL; playerId < EnfusionEngine::FarEntityTableSize(); ++playerId) {
-			arrayList.push_back(EnfusionEngine::GetEntity(EnfusionEngine::FarEntityTable(), playerId));
+	for (uint64_t playerId = NULL; playerId < EnfusionEngine::NearEntityTableSize() + 512; ++playerId) {
+		if (playerId != 0) { // check if entity != localplayer
+			uint64_t targetentity = EnfusionEngine::GetEntity(EnfusionEngine::NearEntityTable(), playerId);
+			if (EnfusionEngine::GetType(targetentity) == Types::dayzplayer) {
+				arrayList.push_back(targetentity);
+			}
 		}
 	}
-	return arrayList;
+
+	for (uint64_t playerId = NULL; playerId < EnfusionEngine::FarEntityTableSize() + 512; ++playerId) {
+			uint64_t targetentity = EnfusionEngine::GetEntity(EnfusionEngine::FarEntityTable(), playerId);
+			if (EnfusionEngine::GetType(targetentity) == Types::dayzplayer) {
+				arrayList.push_back(targetentity);
+			}
+	}
+
+	return arrayList2;
 }
 
 std::string EnfusionEngine::ReadArmaString(uint64_t address)
@@ -423,6 +514,11 @@ std::string EnfusionEngine::ReadArmaString(uint64_t address)
 
 	return text.c_str();
 }
+
+
+
+
+
 
 
 
