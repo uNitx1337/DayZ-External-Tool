@@ -80,6 +80,8 @@ using namespace std;
 #define off_world_cameraon 0x2840
 #define off_world_playeron 0x2848
 
+#define off_world_terraingrid 0xb40
+
 #define off_sortedobject_entity 0x8
 
 #define off_entity_cameraentry 0x2168
