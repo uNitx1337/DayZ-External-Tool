@@ -61,6 +61,7 @@ public:
 	static void MovCameraLeft();
 	static void MovCameraForward();
 	static void MovCameraBackward();
+	static void SetTerrainGrid(float value);
 	static float CameraSpeed;
 	static bool SetPosition(uint64_t Entity, Vector3 to);
 	static bool KillBySilentAim(uint64_t Entity);
@@ -213,6 +214,10 @@ void EnfusionEngine::MovCameraBackward() {
 
 	EnfusionProcess::WriteData<float>(
 		EnfusionEngine::GetCameraEntry() + off_cameraentry_movforwardbackward, updown + EnfusionEngine::CameraSpeed);
+}
+
+void EnfusionEngine::SetTerrainGrid(float value) {
+	EnfusionProcess::WriteData<float>(EnfusionEngine::GetWorld() + off_world_terraingrid, value); //0 - remove 12 - set
 }
 
 uint64_t EnfusionEngine::GetLocalPlayer() {
