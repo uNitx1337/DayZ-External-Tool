@@ -1,5 +1,5 @@
 /*
-	by unitx 12.22.2018
+	by unitx 12.22.2018 (3.1.2019 - lastUpdate)
 */
 
 #include "Engine.h"
@@ -11,36 +11,23 @@ int main()
 
 	while (true) 
 	{
+		/*
 		printf("Server: %s \n", EnfusionEngine::GetNetworkClientServerName().c_str());
-		printf("Players Online: %d \n", EnfusionEngine::GetCountOfPlayers());
+		printf("Players Online: %d \n", EnfusionEngine::GetCountOfPlayers()); */
 
 		
-		for (uint64_t Entity : EnfusionEngine::GetAllEntityes())
+		for (uint64_t Entity : EnfusionEngine::GetAllEntityes()) // all players
 		{
 			Vector3 worldPosition = EnfusionEngine::GetCoordinate(Entity);
 			Vector3 screenPosition = EnfusionEngine::WorldToScreen(worldPosition);
 
-			if (EnfusionEngine::GetType(Entity) == Types::dayzplayer)
-			{
-				printf("[Soldier]                     \n");
-				printf("PlayerName: %s                \n", EnfusionEngine::GetPlayerName(Entity).c_str());
-				printf("Type: %s                      \n", EnfusionEngine::GetTypeName(Entity).c_str());
-				printf("Model: %s                     \n", EnfusionEngine::GetModelName(Entity).c_str());
-				printf("Item in Hands: %s             \n", EnfusionEngine::GetItemInHands(Entity).c_str());
-				printf("Distance: %.0fm               \n", EnfusionEngine::GetDistanceToMe(worldPosition));
-				printf("Position: %.1f : %.1f : %.1f  \n", worldPosition.x, worldPosition.y, worldPosition.z);
-				printf("SceenPosition: %.1f : %.1f    \n", screenPosition.x, screenPosition.y);
-			}
-
-			if (EnfusionEngine::GetType(Entity) == Types::Car)
-			{
-				//etc..
-			}
-
-			if (EnfusionEngine::GetType(Entity) == Types::Thing)
-			{
-				//etc..
-			}
+			printf("PlayerName: %s                \n", EnfusionEngine::GetPlayerName(Entity).c_str());
+			printf("Type: %s                      \n", EnfusionEngine::GetTypeName(Entity).c_str());
+			printf("Model: %s                     \n", EnfusionEngine::GetModelName(Entity).c_str());
+			printf("Item in Hands: %s             \n", EnfusionEngine::GetItemInHands(Entity).c_str());
+			printf("Distance: %.0fm               \n", EnfusionEngine::GetDistanceToMe(worldPosition));
+			printf("Position: %.1f : %.1f : %.1f  \n", worldPosition.x, worldPosition.y, worldPosition.z);
+			printf("SceenPosition: %.1f : %.1f    \n", screenPosition.x, screenPosition.y);		
 		}
 
 		//Camera control
