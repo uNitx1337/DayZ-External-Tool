@@ -6,7 +6,8 @@ Example (very easy to use!)
 
 	EnfusionProcess::AutoGameSelection(Analysis::Deep); //GetPHandle
 	
-	for (uint64_t Entity : EnfusionEngine::GetAllEntityes()) // all players
+	//get all players around u
+		for (uint64_t Entity : EnfusionEngine::GetAllEntityes()) // all players
 		{
 			Vector3 worldPosition = EnfusionEngine::GetCoordinate(Entity);
 			Vector3 screenPosition = EnfusionEngine::WorldToScreen(worldPosition);
@@ -19,5 +20,8 @@ Example (very easy to use!)
 			printf("Position: %.1f : %.1f : %.1f  \n", worldPosition.x, worldPosition.y, worldPosition.z);
 			printf("SceenPosition: %.1f : %.1f    \n", screenPosition.x, screenPosition.y);		
 		}
-
+		
+		//remove grass
+		EnfusionEngine::SetTerrainGrid(0.0f); //remove it
+		EnfusionEngine::SetTerrainGrid(10.0f); //change back
 
