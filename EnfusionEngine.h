@@ -504,7 +504,7 @@ vector<uint64_t> EnfusionEngine::GetAllEntityes()
 			}
 	}
 
-	return arrayList2;
+	return arrayList;
 }
 
 std::string EnfusionEngine::ReadArmaString(uint64_t address)
