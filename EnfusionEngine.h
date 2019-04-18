@@ -1,6 +1,8 @@
-/*
-	by unitx 12.22.2018 (3.1.2019 - lastUpdate)
-*/
+/**
+ * Copyright (c) 2019 exsightcore (by emey)
+ * last up - 04.19.2019
+ */
+
 
 #include "Engine.h"
 #include "EnfusionProcess.h"
@@ -22,6 +24,7 @@ public:
 	static string GetNetworkClientServerName();
 	static uint64_t GetCountOfPlayers();
 	static string GetPlayerName(uint64_t Entity);
+	static string GetItemName(uint64_t Entity); // my own
 	static uint64_t GetPlayerIdentityNetworkId(uint64_t Identity);
 	static string GetPlayerIdentityPlayerName(uint64_t Identity);
 	static uint64_t GetIdentity(uint64_t networkId);
@@ -112,6 +115,12 @@ uint64_t EnfusionEngine::GetCountOfPlayers() {
 string EnfusionEngine::GetPlayerName(uint64_t Entity) {
 
 	return GetPlayerIdentityPlayerName(
+		EnfusionEngine::GetNetworkId(Entity)).c_str();
+}
+
+string EnfusionEngine::GetItemName(uint64_t Entity) {
+
+	return GetItemName(
 		EnfusionEngine::GetNetworkId(Entity)).c_str();
 }
 
@@ -302,9 +311,9 @@ Vector3 EnfusionEngine::GetProjectionD2() {
 Vector3 EnfusionEngine::WorldToScreen(Vector3 Position)
 {
 	//convert world cords to screen cords :)
-	
+
 	if (!EnfusionEngine::GetCamera())
-	return Vector3();
+		return Vector3();
 
 	Vector3 temp = Position - EnfusionEngine::GetInvertedViewTranslation();
 
@@ -320,20 +329,20 @@ Vector3 EnfusionEngine::WorldToScreen(Vector3 Position)
 
 float EnfusionEngine::RadiansToDegrees(float radians) {
 	float degrees;
-	degrees = ((radians * 180) / M_PI);
+	degrees = ((radians * 180) / 3.14159265358979323846);
 	return degrees;
 }
 
 string EnfusionEngine::GetDirection()
 {
 	//get ur direction view
-	
+
 	Vector3 viewAnglesRadians, viewAngle;
 	viewAnglesRadians.x = atan2(
 		EnfusionEngine::GetInvertedViewRight().z, EnfusionEngine::GetInvertedViewRight().x);
 	viewAngle.x = EnfusionEngine::RadiansToDegrees(viewAnglesRadians.x);
 	viewAnglesRadians.y = atan2(
-		EnfusionEngine::GetInvertedViewForward().y,EnfusionEngine::GetInvertedViewUp().y);
+		EnfusionEngine::GetInvertedViewForward().y, EnfusionEngine::GetInvertedViewUp().y);
 	viewAngle.y = EnfusionEngine::RadiansToDegrees(viewAnglesRadians.y);
 
 	if (viewAngle.x >= 0 && viewAngle.x <= 90) {
@@ -355,7 +364,8 @@ Vector3 EnfusionEngine::GetCoordinate(uint64_t Entity)
 	if (Entity == EnfusionEngine::GetLocalPlayer()) {
 		return Vector3(EnfusionProcess::ReadData<Vector3>(
 			EnfusionEngine::GetLocalPlayerVisualState() + off_visualstate_position));
-	} else {
+	}
+	else {
 		return  Vector3(EnfusionProcess::ReadData<Vector3>(
 			EnfusionProcess::ReadData<uint64_t>(
 				Entity + off_entity_renderervisualstate) + off_visualstate_position));
@@ -430,7 +440,7 @@ vector<uint64_t> EnfusionEngine::GetAllItems()
 	for (uint64_t ItemId = NULL; ItemId < EnfusionEngine::GetItemTableSize(); ++ItemId) {
 		arrayList.push_back(EnfusionEngine::GetEntity(EnfusionEngine::GetItemTable(), ItemId));
 	}
-	
+
 	return arrayList;
 }
 
@@ -460,7 +470,8 @@ bool EnfusionEngine::SetPosition(uint64_t Entity, Vector3 TargetPosition)
 		EnfusionProcess::WriteData<Vector3>(
 			EnfusionProcess::ReadData<uint64_t>(
 				Entity + off_entity_futurevisualstate) + off_visualstate_position, TargetPosition);
-	} else {
+	}
+	else {
 		EnfusionProcess::WriteData<Vector3>(
 			EnfusionProcess::ReadData<uint64_t>(
 				Entity + off_entity_renderervisualstate) + off_visualstate_position, TargetPosition);
@@ -473,7 +484,7 @@ bool EnfusionEngine::KillBySilentAim(uint64_t Entity)
 	for (uint64_t playerId = NULL; playerId < EnfusionEngine::BulletTableSize(); ++playerId) {
 		Vector3 WorldPosition = EnfusionEngine::GetCoordinate(Entity);
 		EnfusionEngine::SetPosition(EnfusionEngine::GetEntity(EnfusionEngine::BulletTable(), playerId), // tp ur bullet to entity head
-					    Vector3(WorldPosition.x, WorldPosition.y + 1.0f, WorldPosition.z)); // body pos [+/-] :)
+			Vector3(WorldPosition.x, WorldPosition.y + 1.0f, WorldPosition.z)); // body pos [+/-] :)
 	}
 	return true;
 }
@@ -486,7 +497,7 @@ vector<uint64_t> EnfusionEngine::GetAllBullets()
 		arrayList.push_back(EnfusionEngine::GetEntity(EnfusionEngine::BulletTable(), playerId));
 	}
 
-	return arrayList;
+	return arrayList; 
 }
 
 vector<uint64_t> EnfusionEngine::GetAllEntityes()
@@ -496,17 +507,19 @@ vector<uint64_t> EnfusionEngine::GetAllEntityes()
 	for (uint64_t playerId = NULL; playerId < EnfusionEngine::NearEntityTableSize() + 512; ++playerId) {
 		if (playerId != 0) { // check if entity != localplayer
 			uint64_t targetentity = EnfusionEngine::GetEntity(EnfusionEngine::NearEntityTable(), playerId);
-			if (EnfusionEngine::GetType(targetentity) == Types::dayzplayer) {
+
+			if (EnfusionEngine::GetEntityTypeName(targetentity) == "dayzplayer") {
 				arrayList.push_back(targetentity);
 			}
 		}
 	}
 
 	for (uint64_t playerId = NULL; playerId < EnfusionEngine::FarEntityTableSize() + 512; ++playerId) {
-			uint64_t targetentity = EnfusionEngine::GetEntity(EnfusionEngine::FarEntityTable(), playerId);
-			if (EnfusionEngine::GetType(targetentity) == Types::dayzplayer) {
-				arrayList.push_back(targetentity);
-			}
+		uint64_t targetentity = EnfusionEngine::GetEntity(EnfusionEngine::FarEntityTable(), playerId);
+
+		if (EnfusionEngine::GetEntityTypeName(targetentity) == "dayzplayer") {
+			arrayList.push_back(targetentity);
+		}
 	}
 
 	return arrayList;
@@ -519,6 +532,17 @@ std::string EnfusionEngine::ReadArmaString(uint64_t address)
 
 	return text.c_str();
 }
+
+
+
+
+
+
+
+
+
+
+
 
 
 
